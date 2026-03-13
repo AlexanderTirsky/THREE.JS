@@ -21,14 +21,26 @@ const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshBasicMaterial({ color: "red" });
 
 const cube = new THREE.Mesh(geometry, material);
+cube.position.set(-4, 0, 0);
 
 scene.add(cube);
 
+const spheraGeometry = new THREE.SphereGeometry();
+
+const spheraMaterial = new THREE.MeshBasicMaterial({ color: "blue" });
+
+const sphera = new THREE.Mesh(spheraGeometry, spheraMaterial);
+sphera.position.set(-1, 0, 0);
+
+scene.add(sphera);
+// функция для постоянного рендеринга анимации
 function animate() {
   requestAnimationFrame(animate);
 
   cube.rotation.x += 0.1;
   cube.rotation.y += 0.1;
+  sphera.rotation.x += 0.1;
+  sphera.rotation.y += 0.1;
 
   renderer.render(scene, camera);
 }
