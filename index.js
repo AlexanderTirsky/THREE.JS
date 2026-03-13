@@ -25,22 +25,37 @@ cube.position.set(-4, 0, 0);
 
 scene.add(cube);
 
-const spheraGeometry = new THREE.SphereGeometry();
+const spheraGeometry = new THREE.SphereGeometry(0.5, 10, 10);
 
-const spheraMaterial = new THREE.MeshBasicMaterial({ color: "blue" });
+const spheraMaterial = new THREE.MeshPhongMaterial({
+  color: "blue",
+  emissive: "white",
+  shininess: 100,
+});
 
 const sphera = new THREE.Mesh(spheraGeometry, spheraMaterial);
 sphera.position.set(-1, 0, 0);
 
 scene.add(sphera);
+
+const torus = new THREE.Mesh(
+  new THREE.TorusGeometry(0.7, 0.2, 16, 100),
+  new THREE.MeshBasicMaterial({ color: "green" }),
+);
+torus.position.set(1, 0, 0);
+scene.add(torus);
 // функция для постоянного рендеринга анимации
 function animate() {
   requestAnimationFrame(animate);
 
   cube.rotation.x += 0.1;
   cube.rotation.y += 0.1;
+
   sphera.rotation.x += 0.1;
   sphera.rotation.y += 0.1;
+
+  torus.rotation.x += 0.1;
+  torus.rotation.y += 0.1;
 
   renderer.render(scene, camera);
 }
