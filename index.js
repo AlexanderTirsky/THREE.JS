@@ -15,12 +15,16 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
+//тектура обычная картинка
+const texture = new THREE.TextureLoader().load("image/grass.jpeg");
+const textureMaterial = new THREE.MeshBasicMaterial({ map: texture });
 
+// создание фигру разных
 const geometry = new THREE.BoxGeometry();
 
-const material = new THREE.MeshBasicMaterial({ color: "red" });
+//const material = new THREE.MeshBasicMaterial({ color: "red" });
 
-const cube = new THREE.Mesh(geometry, material);
+const cube = new THREE.Mesh(geometry, textureMaterial);
 cube.position.set(-4, 0, 0);
 
 scene.add(cube);
@@ -44,6 +48,12 @@ const torus = new THREE.Mesh(
 );
 torus.position.set(1, 0, 0);
 scene.add(torus);
+
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), textureMaterial);
+plane.position.set(-2, 2, 0);
+
+scene.add(plane);
+
 // функция для постоянного рендеринга анимации
 function animate() {
   requestAnimationFrame(animate);
