@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 //сцена
 const scene = new THREE.Scene();
 
@@ -18,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  100,
+  1000,
 );
 
 camera.position.z = 5;
@@ -48,14 +49,34 @@ const highLightMaterial = new THREE.MeshStandardMaterial({
 
 const cube = new THREE.Mesh(geometry, originMaterial);
 cube.position.set(0, 0, 0);
-scene.add(cube);
+// scene.add(cube);
 
 const sphera = new THREE.Mesh(
   new THREE.SphereGeometry(),
   new THREE.MeshStandardMaterial({ color: "green" }),
 );
 sphera.position.x = 2;
-scene.add(sphera);
+//scene.add(sphera);
+
+// Загрузка моделек
+
+const loader = new GLTFLoader();
+
+loader.load(
+  "models/dodge_challenger/scene.gltf",
+  (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.001, 0.001, 0.001);
+    model.position.set(0, 0, 0);
+    scene.add(model);
+  },
+  (xhr) => {
+    console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+  },
+  (error) => {
+    console.error("Error:" + error);
+  },
+);
 
 // GSAP анимация
 
@@ -101,6 +122,7 @@ function animate() {
   }
 
   contrls.update();
+  renderer.setClearColor("lightblue");
   renderer.render(scene, camera);
 }
 animate();

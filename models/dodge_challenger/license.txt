@@ -1,0 +1,8 @@
+Model Information:
+* title:	Dodge Challenger SRT Hellcat Redeye Widebody
+* source:	https://sketchfab.com/3d-models/dodge-challenger-srt-hellcat-redeye-widebody-86ae58e2e2e443cb8243df52f407729a
+* author:	RPMRender (https://sketchfab.com/RPMRender)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
