@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { gsap } from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 //сцена
 const scene = new THREE.Scene();
@@ -38,8 +39,14 @@ contrls.maxDistance = 10;
 
 // создание фигру разных
 const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshStandardMaterial({ color: "red" });
-const cube = new THREE.Mesh(geometry, material);
+const originMaterial = new THREE.MeshStandardMaterial({ color: "red" });
+const highLightMaterial = new THREE.MeshStandardMaterial({
+  color: "yellow",
+  emissive: "white",
+  emissiveIntensity: 0.5,
+});
+
+const cube = new THREE.Mesh(geometry, originMaterial);
 cube.position.set(0, 0, 0);
 scene.add(cube);
 
@@ -50,31 +57,48 @@ const sphera = new THREE.Mesh(
 sphera.position.x = 2;
 scene.add(sphera);
 
+// GSAP анимация
+
+// gsap.to(cube.position, {
+//   y: 2,
+//   x: 1,
+//   duration: 1,
+//   ease: "power1.inOut",
+//   repeat: -1,
+//   yoyo: true,
+// });
+
+// gsap end
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-function onMouseClick(event) {
+function onMouseMove(event) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-
-  const intersects = raycaster.intersectObjects(scene.children);
-
-  if (intersects.length > 0) {
-    intersects[0].object.material.color.set("blue");
-    alert("Clicked on item");
-  }
 }
 
-window.addEventListener("click", onMouseClick);
+window.addEventListener("mousemove", onMouseMove);
+
+let isHovered = false;
 
 // функция для постоянного рендеринга анимации
 function animate() {
   requestAnimationFrame(animate);
 
-  //   cube.rotation.x += 0.1;
-  //   cube.rotation.y += 0.1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersect = raycaster.intersectObject(cube);
+
+  if (intersect.length > 0 && !isHovered) {
+    cube.material = highLightMaterial;
+    isHovered = true;
+    gsap.to(cube.scale, { x: 1.5, y: 1.5, duration: 1.5, ease: "power1.out" });
+  } else if (intersect.length == 0 && isHovered) {
+    cube.material = originMaterial;
+    isHovered = false;
+    gsap.to(cube.scale, { x: 1, y: 1, duration: 1.5, ease: "power1.out" });
+  }
 
   contrls.update();
   renderer.render(scene, camera);
