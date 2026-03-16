@@ -2,6 +2,9 @@ import * as THREE from "three";
 import { gsap } from "gsap";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 //сцена
 const scene = new THREE.Scene();
 
@@ -38,6 +41,21 @@ contrls.screenSpacePanning = false;
 contrls.minDistance = 2;
 contrls.maxDistance = 10;
 
+// Post Process
+
+const renderPass = new RenderPass(scene, camera);
+
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerHeight, window.innerWidth),
+  1.5,
+  0.4,
+  0.85,
+);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(renderPass);
+composer.addPass(bloomPass);
+
 // создание фигру разных
 const geometry = new THREE.BoxGeometry();
 const originMaterial = new THREE.MeshStandardMaterial({ color: "red" });
@@ -58,6 +76,33 @@ const sphera = new THREE.Mesh(
 sphera.position.x = 2;
 //scene.add(sphera);
 
+// шейдеры
+
+const vertexShader = `
+  varying vec3 vPosition;
+
+  void main() {
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const fragmentShader = `
+  varying vec3 vPosition;
+
+  void main() {
+    gl_FragColor = vec4(abs(vPosition.x), abs(vPosition.y), abs(vPosition.z), 1.0);
+  }
+`;
+
+const shaderMaterial = new THREE.ShaderMaterial({
+  vertexShader: vertexShader,
+  fragmentShader: fragmentShader,
+});
+
+const newCube = new THREE.Mesh(new THREE.BoxGeometry(), shaderMaterial);
+scene.add(newCube);
+
 // Загрузка моделек
 
 const loader = new GLTFLoader();
@@ -67,7 +112,7 @@ loader.load(
   (gltf) => {
     const model = gltf.scene;
     model.scale.set(0.001, 0.001, 0.001);
-    model.position.set(0, 0, 0);
+    model.position.set(1, 1, 1);
     scene.add(model);
   },
   (xhr) => {
@@ -123,6 +168,6 @@ function animate() {
 
   contrls.update();
   renderer.setClearColor("lightblue");
-  renderer.render(scene, camera);
+  composer.render();
 }
 animate();
