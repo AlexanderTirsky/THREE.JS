@@ -1,12 +1,24 @@
 import * as THREE from "three";
-import { gsap } from "gsap";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+
 //сцена
 const scene = new THREE.Scene();
+
+//камера
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100,
+);
+camera.position.set(0, 5, 12);
+camera.rotation.x = 6;
+
+//рендер
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+document.body.appendChild(renderer.domElement);
 
 // Свет всю сцену освещает без теней
 const ambientLight = new THREE.AmbientLight("white", 0.5);
@@ -14,106 +26,31 @@ scene.add(ambientLight);
 
 // свет типо солнца есть тени у объектов
 const dirLight = new THREE.DirectionalLight("white", 1);
+dirLight.castShadow = true;
 dirLight.position.set(5, 5, 5);
 scene.add(dirLight);
 
-//камера
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000,
+// создание фигуры
+
+const road = new THREE.Mesh(
+  new THREE.PlaneGeometry(30, 20),
+  new THREE.MeshStandardMaterial({ color: "#333" }),
 );
+road.rotation.x = -Math.PI / 2;
+scene.add(road);
 
-camera.position.z = 5;
-//рендер
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-
-document.body.appendChild(renderer.domElement);
-
-//управление камерой
-
-const contrls = new OrbitControls(camera, renderer.domElement);
-contrls.enableDamping = true;
-contrls.dampingFactor = 0.05;
-contrls.screenSpacePanning = false;
-contrls.minDistance = 2;
-contrls.maxDistance = 10;
-
-// Post Process
-
-const renderPass = new RenderPass(scene, camera);
-
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerHeight, window.innerWidth),
-  1.5,
-  0.4,
-  0.85,
-);
-
-const composer = new EffectComposer(renderer);
-composer.addPass(renderPass);
-composer.addPass(bloomPass);
-
-// создание фигру разных
-const geometry = new THREE.BoxGeometry();
-const originMaterial = new THREE.MeshStandardMaterial({ color: "red" });
-const highLightMaterial = new THREE.MeshStandardMaterial({
-  color: "yellow",
-  emissive: "white",
-  emissiveIntensity: 0.5,
-});
-
-const cube = new THREE.Mesh(geometry, originMaterial);
-cube.position.set(0, 0, 0);
-// scene.add(cube);
-
-const sphera = new THREE.Mesh(
-  new THREE.SphereGeometry(),
-  new THREE.MeshStandardMaterial({ color: "green" }),
-);
-sphera.position.x = 2;
-//scene.add(sphera);
-
-// шейдеры
-
-const vertexShader = `
-  varying vec3 vPosition;
-
-  void main() {
-    vPosition = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const fragmentShader = `
-  varying vec3 vPosition;
-
-  void main() {
-    gl_FragColor = vec4(abs(vPosition.x), abs(vPosition.y), abs(vPosition.z), 1.0);
-  }
-`;
-
-const shaderMaterial = new THREE.ShaderMaterial({
-  vertexShader: vertexShader,
-  fragmentShader: fragmentShader,
-});
-
-const newCube = new THREE.Mesh(new THREE.BoxGeometry(), shaderMaterial);
-scene.add(newCube);
-
-// Загрузка моделек
+// Загрузка моделек car
+let car;
 
 const loader = new GLTFLoader();
 
 loader.load(
   "models/dodge_challenger/scene.gltf",
   (gltf) => {
-    const model = gltf.scene;
-    model.scale.set(0.001, 0.001, 0.001);
-    model.position.set(1, 1, 1);
-    scene.add(model);
+    car = gltf.scene;
+    car.scale.set(0.001, 0.001, 0.001);
+    car.position.set(0, 0, 0);
+    scene.add(car);
   },
   (xhr) => {
     console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
@@ -123,51 +60,80 @@ loader.load(
   },
 );
 
-// GSAP анимация
+// управление машинкой
 
-// gsap.to(cube.position, {
-//   y: 2,
-//   x: 1,
-//   duration: 1,
-//   ease: "power1.inOut",
-//   repeat: -1,
-//   yoyo: true,
-// });
+let angle = 0;
+let isMoving = false;
+//при нажатии кнопки keydown
+window.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowUp") isMoving = true;
+});
+// при отжатие кнопки keyup
+window.addEventListener("keyup", (event) => {
+  if (event.key === "ArrowUp") isMoving = false;
+});
 
-// gsap end
+function moveCar() {
+  if (!car || !isMoving) return;
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+  angle += 0.01;
+  car.position.x = 5 * Math.cos(angle);
+  car.position.z = 5 * Math.sin(angle);
+  car.rotation.y = -angle;
+}
+// Точки для остановки машины
 
-function onMouseMove(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+const infoPoints = [
+  {
+    position: new THREE.Vector3(5, 0, 0),
+    message: "Обо мне я веб разработчик",
+  },
+  {
+    position: new THREE.Vector3(-5, 0, 0),
+    message: "Контакты: tirsky06@gmail.com",
+  },
+  {
+    position: new THREE.Vector3(0, 0, 5),
+    message: "Мой стек: HTML,CSS,Tailwind,JS,React,NextJS,ThreeJS",
+  },
+];
+
+function checkInfoPoints() {
+  infoPoints.forEach((point) => {
+    const distance = car.position.distanceTo(point.position);
+    if (distance < 0.5) showInfo(point.message);
+  });
 }
 
-window.addEventListener("mousemove", onMouseMove);
+function showInfo(message) {
+  const infoBox = document.getElementById("info-block");
+  infoBox.innerText = message;
+  infoBox.style.display = "block";
+}
 
-let isHovered = false;
+//сферы для точек
+
+function createInfoSphera(position) {
+  const sphera = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 32, 32),
+    new THREE.MeshStandardMaterial({ color: "red" }),
+  );
+  sphera.position.copy(position);
+  sphera.position.y = 2;
+  scene.add(sphera);
+}
+
+infoPoints.forEach((point) => {
+  createInfoSphera(point.position);
+});
 
 // функция для постоянного рендеринга анимации
 function animate() {
   requestAnimationFrame(animate);
+  moveCar();
+  checkInfoPoints();
 
-  raycaster.setFromCamera(mouse, camera);
-
-  const intersect = raycaster.intersectObject(cube);
-
-  if (intersect.length > 0 && !isHovered) {
-    cube.material = highLightMaterial;
-    isHovered = true;
-    gsap.to(cube.scale, { x: 1.5, y: 1.5, duration: 1.5, ease: "power1.out" });
-  } else if (intersect.length == 0 && isHovered) {
-    cube.material = originMaterial;
-    isHovered = false;
-    gsap.to(cube.scale, { x: 1, y: 1, duration: 1.5, ease: "power1.out" });
-  }
-
-  contrls.update();
   renderer.setClearColor("lightblue");
-  composer.render();
+  renderer.render(scene, camera);
 }
 animate();
